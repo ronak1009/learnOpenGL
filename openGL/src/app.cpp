@@ -84,7 +84,7 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 
     //glDeleteShader(vs);
    // glDeleteShader(fs);
-    //glDeleteProgram(program);
+   //glDeleteProgram(program);
     return program;
 }
 
@@ -115,19 +115,28 @@ int main(void)
 
     //building the buffer
     unsigned int buffer;
-    float positions[6] = {
-        -0.5f, -0.5f,
-        0.0f, 0.5f,
-        0.5f, -0.5f
+    float positions[] = {
+        -0.5f, -0.5f, //0
+        0.5f, -0.5f, //1
+        0.5f, 0.5f, //2
+        -0.5f, 0.5f, //3
     };
-    //no of buffers required and the id of the buffers
-    //pointer to unsigned int
+    //FOR CREATING THE INDEX BUFFER
+    unsigned int indicies[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
     glGenBuffers(1, &buffer);
     //binding the buffer to openGL
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     //adding the data to buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
+    //binding the indicies to the buffer
+    unsigned int indexBuffer;
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
     //setting up Vertex attribute
     int stride = sizeof(float) * 2; //amount of bytes for vertex
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0);
@@ -141,13 +150,10 @@ int main(void)
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
+        //Render here
         glClear(GL_COLOR_BUFFER_BIT);
-        /*actual draw call to draw the traingle
-        this will draw the triangles, but you would see black screen
-        This is perfectly normal as nothing extra is specified like color, etc.
-        */
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
          
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
