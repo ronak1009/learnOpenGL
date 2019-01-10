@@ -5,6 +5,29 @@
 #include <string>
 #include <sstream>
 
+#define ASSERT(x) if(!(x)) __debugbreak();
+#define GLCALL(x) GLClearError();\
+                    x;\
+                    ASSERT(GLLogCall(#x, __FILE__ , __LINE__))
+
+static void GLClearError()
+{
+    //GL_NO_ERROR => guarantee to be 0
+    while(glGetError() != GL_NO_ERROR);
+}
+
+static bool GLLogCall(const char* function, const char* file, const int line)
+{
+    while(GLenum err = glGetError())
+    {
+        std::cout << "Error: "<< err << 
+            " " << function << " : " << file << " : " <<
+            line  << std::endl;
+        return false;
+    }
+    return true;
+}
+
 struct ShaderProgramSource {
     std::string VertexShader;
     std::string FragmentShader;
@@ -126,42 +149,41 @@ int main(void)
         0, 1, 2,
         2, 3, 0
     };
-    glGenBuffers(1, &buffer);
-    //binding the buffer to openGL
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    //adding the data to buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+    GLCALL(glGenBuffers(1, &buffer));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+    GLCALL(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
 
     //binding the indicies to the buffer
     unsigned int indexBuffer;
-    glGenBuffers(1, &indexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
+    GLCALL(glGenBuffers(1, &indexBuffer));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer));
+    GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW));
     //setting up Vertex attribute
     int stride = sizeof(float) * 2; //amount of bytes for vertex
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0);
+    GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0));
     //enabling the vertex
-    glEnableVertexAttribArray(0);
+    GLCALL(glEnableVertexAttribArray(0));
     
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexShader, source.FragmentShader);
-    glUseProgram(shader);
+    GLCALL(glUseProgram(shader));
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         //Render here
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-         
+        //GLClearError();
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
+        //ASSERT(GLLogCall());
         /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        GLCALL(glfwSwapBuffers(window));
 
         /* Poll for and process events */
-        glfwPollEvents();
+        GLCALL(glfwPollEvents());
     }
 
-    glfwTerminate();
+    GLCALL(glfwTerminate());
     return 0;
 }
