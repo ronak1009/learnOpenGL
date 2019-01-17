@@ -129,7 +129,8 @@ int main(void)
     }
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-
+    //setting the frame-rate of your openGL context
+    glfwSwapInterval(1);
     //glewInit() uses the valid OpenGL context. without creating the valid context, the glew returns error
     //later you shall not be able to use the api(s) related to openGL
 
@@ -167,20 +168,33 @@ int main(void)
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexShader, source.FragmentShader);
     GLCALL(glUseProgram(shader));
-    
-    /* Loop until the user closes the window */
+
+    //setting the value of the u_Color uniform variable from CPU to GPU
+    GLCALL(
+        int location = glGetUniformLocation(shader, "u_Color");
+        ASSERT(location != -1); //does not have incorrect values.
+        /*glUniform4f(location, 0.2f, 0.7f, 0.8f, 1.0f);*/
+    );
+    //animating the colors
+    float r = 0.0f;
+    float increment = 0.05f;
+
     while (!glfwWindowShouldClose(window))
     {
         //Render here
         GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
-        //GLClearError();
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
-        //ASSERT(GLLogCall());
-        /* Swap front and back buffers */
+        GLCALL(glUniform4f(location, r, 0.7f, 0.8f, 1.0f));
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        
+        if(r > 1.0f)
+            increment = -0.5f;
+        else if(r < 0.0f)
+            increment = 0.05f;
+        r += increment;
+
         GLCALL(glfwSwapBuffers(window));
 
-        /* Poll for and process events */
         GLCALL(glfwPollEvents());
     }
 
