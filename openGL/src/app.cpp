@@ -120,6 +120,12 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	
+
     /* Create a windowed mode window and it's OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
     if (!window)
@@ -150,6 +156,12 @@ int main(void)
         0, 1, 2,
         2, 3, 0
     };
+
+	//creating vertex arrary object
+	unsigned int vao;
+	GLCALL(glGenVertexArrays(1, &vao));
+	GLCALL(glBindVertexArray(vao));
+
     GLCALL(glGenBuffers(1, &buffer));
     GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
     GLCALL(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
@@ -161,6 +173,12 @@ int main(void)
     GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW));
     //setting up Vertex attribute
     int stride = sizeof(float) * 2; //amount of bytes for vertex
+    //defining the layout of your data
+    //each vertex has 2 attributes of type float
+    //stride of each attributes i.e. how much bytes to move to reach to next attribute
+
+	//when using the CORE profile of OPENGL - vertex attrib pointer cannot be set unless
+	//the vertex array object (VAO) is bounded to the buffer
     GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0));
     //enabling the vertex
     GLCALL(glEnableVertexAttribArray(0));
@@ -175,6 +193,13 @@ int main(void)
         ASSERT(location != -1); //does not have incorrect values.
         /*glUniform4f(location, 0.2f, 0.7f, 0.8f, 1.0f);*/
     );
+
+    //unbinding everything
+    GLCALL(glUseProgram(0));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
+    
     //animating the colors
     float r = 0.0f;
     float increment = 0.05f;
@@ -184,7 +209,17 @@ int main(void)
         //Render here
         GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
-        GLCALL(glUniform4f(location, r, 0.7f, 0.8f, 1.0f));
+        //before the draw call, you need to bind the data to buffer
+        GLCALL(glUseProgram(shader));
+        GLCALL(glUniform4f(location, r, 0.7f, 0.8f, 1.0f)); //can be set only after the shader is bound
+        
+		/* do we need to specify the layout of our data everytime ???
+		GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0));
+        GLCALL(glEnableVertexAttribArray(0));
+		*/
+		GLCALL(glBindVertexArray(vao));
+        GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer));
+
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
         
         if(r > 1.0f)
@@ -194,7 +229,6 @@ int main(void)
         r += increment;
 
         GLCALL(glfwSwapBuffers(window));
-
         GLCALL(glfwPollEvents());
     }
 
