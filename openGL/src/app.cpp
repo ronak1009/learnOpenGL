@@ -8,7 +8,10 @@
 #include "Renderer.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
-struct ShaderProgramSource {
+#include "VertexArray.h"
+
+struct ShaderProgramSource
+{
   std::string VertexShader;
   std::string FragmentShader;
 };
@@ -138,11 +141,11 @@ int main(void)
     };
 
     //creating vertex arrary object
-    unsigned int vao;
+   /* unsigned int vao;
     GLCALL(glGenVertexArrays(1, &vao));
     GLCALL(glBindVertexArray(vao));
-
-
+*/
+    VertexArray va;
     VertexBuffer vb (positions, sizeof(positions));
     //right now no need to call vb.Bind() as in the constructor we are binding it by default
 
@@ -151,8 +154,12 @@ int main(void)
     //setting up Vertex attribute
     int stride = sizeof(float) * 2; //amount of bytes for vertex
 
-    GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0));
-    GLCALL(glEnableVertexAttribArray(0));
+    
+    VertexBufferLayout layout;
+
+    layout.Push<float>(2);
+    va.AddBuffer(vb, layout);
+    va.Bind();
 
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexShader, source.FragmentShader);
@@ -184,7 +191,7 @@ int main(void)
       GLCALL(glUseProgram(shader));
       GLCALL(glUniform4f(location, r, 0.7f, 0.8f, 1.0f)); //can be set only after the shader is bound
 
-      GLCALL(glBindVertexArray(vao));
+      va.Bind();
       ib.Bind();
       GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
